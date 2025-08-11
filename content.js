@@ -4,17 +4,35 @@ let channelDataError = "";
 let observer = null;
 let lastUrl = location.href;
 
-fetch(chrome.runtime.getURL("/data/channels.json"))
-  .then((res) => res.json())
-  .then((json) => {
-    channelData = json.channels;
-    channelDataError = "";
-    runInjection();
-  })
-  .catch((e) => {
-    console.log("Error loading channels.json:", e);
-    channelDataError = "Unable to load data";
-  });
+function safeGetURL(path) {
+  try {
+    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
+      return chrome.runtime.getURL(path);
+    }
+  } catch (_) {}
+  return null;
+}
+
+function iconMarkup(path) {
+  const u = safeGetURL(path);
+  return u ? `<img src="${u}" width="16" height="16" />` : "";
+}
+
+const dataUrl = safeGetURL("/data/channels.json");
+if (dataUrl) {
+  fetch(dataUrl)
+    .then((res) => res.json())
+    .then((json) => {
+      channelData = json.channels;
+      channelDataError = "";
+      runInjection();
+    })
+    .catch((e) => {
+      channelDataError = "Unable to load data";
+    });
+} else {
+  channelDataError = "Extension unavailable";
+}
 
 function getChannelIdentifier() {
   let id = "";
@@ -129,18 +147,14 @@ function injectButton(container, { found, error }) {
     if (error) {
       const li = document.createElement("li");
       li.innerHTML = `
-            <img src="${chrome.runtime.getURL(
-              "icons/error.svg"
-            )}" width="16" height="16" />
+            ${iconMarkup("icons/error.svg")}
             ${error}
         `;
       list.appendChild(li);
     } else if (found) {
       const li1 = document.createElement("li");
       li1.innerHTML = `
-        <img src="${chrome.runtime.getURL(
-          "icons/money.svg"
-        )}" width="16" height="16" />
+        ${iconMarkup("icons/money.svg")}
         <strong>Investment Status:</strong>
         ${found.level.charAt(0).toUpperCase() + found.level.slice(1)}
         ${found.type === "funding" ? "Funding" : "Acquisition"}
@@ -150,9 +164,7 @@ function injectButton(container, { found, error }) {
       if (found.firmName && found.firmWebsite) {
         const li2 = document.createElement("li");
         li2.innerHTML = `
-          <img src="${chrome.runtime.getURL(
-            "icons/institution.svg"
-          )}" width="16" height="16" />
+          ${iconMarkup("icons/institution.svg")}
           ${
             found.type === "funding"
               ? "<strong>Funded By:</strong>"
@@ -165,9 +177,7 @@ function injectButton(container, { found, error }) {
 
       const li3 = document.createElement("li");
       li3.innerHTML = `
-        <img src="${chrome.runtime.getURL(
-          "icons/link.svg"
-        )}" width="16" height="16" />
+        ${iconMarkup("icons/link.svg")}
         <strong>Source:</strong>
         <a href="${found.source}" target="_blank">Official Website</a>
       `;
@@ -175,9 +185,7 @@ function injectButton(container, { found, error }) {
     } else {
       const li = document.createElement("li");
       li.innerHTML = `
-        <img src="${chrome.runtime.getURL(
-          "icons/money.svg"
-        )}" width="16" height="16" />
+        ${iconMarkup("icons/money.svg")}
         <strong>Investment Status:</strong> Independent
       `;
       list.appendChild(li);
@@ -185,9 +193,8 @@ function injectButton(container, { found, error }) {
 
     const closeBtn = document.createElement("span");
     closeBtn.id = "pe-popup-close";
-    closeBtn.innerHTML = `<img src="${chrome.runtime.getURL(
-      "icons/close.svg"
-    )}" width="16" height="16" style="cursor:pointer"/>`;
+    const closeMarkup = iconMarkup("icons/close.svg");
+    closeBtn.innerHTML = closeMarkup || "×";
 
     closeBtn.addEventListener("click", (ev) => {
       ev.stopPropagation();
