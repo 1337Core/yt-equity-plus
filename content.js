@@ -251,12 +251,6 @@ function startUrlWatcher() {
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      if (activePopup) {
-        activePopup.remove();
-        activePopup = null;
-      }
-      const existing = document.querySelector("#pe-check-button-wrapper");
-      if (existing) existing.remove();
       runInjection();
     }
   }, 500);
