@@ -4,7 +4,6 @@
   "description": "See who really owns that YouTube channel.",
   "version": "1.0",
   "permissions": [],
-  "host_permissions": ["https://raw.githubusercontent.com/*"],
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*"],

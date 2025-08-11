@@ -1,7 +1,6 @@
 let activePopup = null;
 let channelData = null;
 let channelDataError = "";
-let updateChecked = false;
 
 fetch(chrome.runtime.getURL("/data/channels.json"))
   .then((res) => res.json())
@@ -13,23 +12,6 @@ fetch(chrome.runtime.getURL("/data/channels.json"))
     console.log("Error loading channels.json:", e);
     channelDataError = "Unable to load data";
   });
-
-function checkForUpdates() {
-  if (updateChecked) return;
-  updateChecked = true;
-  
-  fetch("https://raw.githubusercontent.com/Kamo-Chip/yt-equity/main/manifest.json")
-    .then(res => res.json())
-    .then(remoteManifest => {
-      const currentVersion = chrome.runtime.getManifest().version;
-      if (remoteManifest.version !== currentVersion) {
-        if (confirm(`YT Equity update available! Current: ${currentVersion}, New: ${remoteManifest.version}. Visit the Chrome Web Store to update?`)) {
-          window.open("https://chrome.google.com/webstore", "_blank");
-        }
-      }
-    })
-    .catch(() => {});
-}
 
 function getChannelIdentifier() {
   let id = "";
@@ -85,8 +67,6 @@ function handleOutsideClick(ev) {
 }
 
 window.addEventListener("yt-page-data-updated", (e) => {
-  checkForUpdates();
-  
   if (activePopup) {
     activePopup.remove();
     document.removeEventListener("click", handleOutsideClick);
