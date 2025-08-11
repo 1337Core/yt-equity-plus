@@ -1,0 +1,17 @@
+name: Channel Report
+description: Paste the channel link and describe the issue.
+title: "Channel issue: <brief summary>"
+labels: ["triage"]
+body:
+  - type: textarea
+    id: report
+    attributes:
+      label: Report
+      description: Include the channel URL and what needs attention.
+      placeholder: "Channel URL and details"
+      value: |
+        Channel URL:
+        
+        Details:
+    validations:
+      required: true
