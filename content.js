@@ -1,12 +1,15 @@
 let activePopup = null;
 let channelData = null;
 let channelDataError = "";
+let observer = null;
+let lastUrl = location.href;
 
 fetch(chrome.runtime.getURL("/data/channels.json"))
   .then((res) => res.json())
   .then((json) => {
     channelData = json.channels;
     channelDataError = "";
+    runInjection();
   })
   .catch((e) => {
     console.log("Error loading channels.json:", e);
@@ -43,10 +46,17 @@ function findBadgeContainer() {
     location.href.includes("/@") ||
     location.href.includes("/channel/")
   ) {
-    container = document.querySelector("yt-flexible-actions-view-model");
-    if (!container) {
-      container = document.querySelector("h1.dynamic-text-view-model-wiz__h1");
-    }
+    container =
+      document.querySelector("ytd-c4-tabbed-header-renderer #buttons") ||
+      document.querySelector("#inner-header-container #buttons") ||
+      document.querySelector("#channel-header #buttons") ||
+      document.querySelector("ytd-c4-tabbed-header-renderer #inner-header-container") ||
+      document.querySelector("#inner-header-container") ||
+      document.querySelector("yt-page-header-renderer #inner-header-container") ||
+      document.querySelector("#channel-header") ||
+      document.querySelector("ytd-c4-tabbed-header-renderer") ||
+      document.querySelector("yt-flexible-actions-view-model") ||
+      document.querySelector("h1.dynamic-text-view-model-wiz__h1");
   }
 
   return container;
@@ -72,46 +82,12 @@ window.addEventListener("yt-page-data-updated", (e) => {
     document.removeEventListener("click", handleOutsideClick);
     activePopup = null;
   }
-
-  const id = getChannelIdentifier();
-  if (!id) {
-    console.log("Could not find id");
-    return;
-  }
-  console.log("ID: ", id);
-  console.log(
-    "Test ID: ",
-    id.includes("@")
-      ? `www.youtube.com/@${id}`
-      : `www.youtube.com/channel/${id}`
-  );
-
-  let found = null;
-
-  if (channelData) {
-    if (id.includes("@")) {
-      found = channelData.find(
-        (ch) => ch.channelHandle.toLowerCase() === id.toLowerCase()
-      );
-    } else {
-      found = channelData.find(
-        (ch) => ch.channelId.toLowerCase() === id.toLowerCase()
-      );
-    }
-  }
-
-  const container = findBadgeContainer();
-
-  if (!container) {
-    console.log("No container");
-  }
-  if (container) {
-    injectButton(container, { found, error: channelDataError });
-  }
+  runInjection();
 });
 
 function injectButton(container, { found, error }) {
   const existing = document.querySelector("#pe-check-button-wrapper");
+  if (existing && container.contains(existing)) return;
   if (existing) existing.remove();
 
   const wrapper = document.createElement("span");
@@ -228,6 +204,64 @@ function injectButton(container, { found, error }) {
     activePopup = popup;
     button.classList.add("button-active");
 
-    setTimeout(() => document.addEventListener("click", handleOutsideClick), 0); // Prevent immediate close
+    setTimeout(() => document.addEventListener("click", handleOutsideClick), 0);
   });
 }
+
+function computeFound(id) {
+  if (!channelData) return null;
+  if (id.includes("@")) {
+    return channelData.find(
+      (ch) => ch.channelHandle.toLowerCase() === id.toLowerCase()
+    );
+  }
+  return channelData.find(
+    (ch) => ch.channelId.toLowerCase() === id.toLowerCase()
+  );
+}
+
+function runInjection() {
+  const id = getChannelIdentifier();
+  if (!id) return;
+  const found = computeFound(id);
+  const container = findBadgeContainer();
+  if (!container) return;
+  injectButton(container, { found, error: channelDataError });
+}
+
+function debounce(fn, wait) {
+  let t;
+  return function () {
+    clearTimeout(t);
+    t = setTimeout(fn, wait);
+  };
+}
+
+function startObserver() {
+  if (observer) observer.disconnect();
+  const debounced = debounce(runInjection, 200);
+  observer = new MutationObserver(() => debounced());
+  observer.observe(document.documentElement || document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
+
+function startUrlWatcher() {
+  setInterval(() => {
+    if (location.href !== lastUrl) {
+      lastUrl = location.href;
+      if (activePopup) {
+        activePopup.remove();
+        activePopup = null;
+      }
+      const existing = document.querySelector("#pe-check-button-wrapper");
+      if (existing) existing.remove();
+      runInjection();
+    }
+  }, 500);
+}
+
+startObserver();
+startUrlWatcher();
+runInjection();
