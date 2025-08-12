@@ -2,7 +2,6 @@ yt equity (fork)
 
 this fork
 - now works when i have ublock on
-- some small ui tweaks
 - same core idea, just some different logic
 
 install (dev mode)
