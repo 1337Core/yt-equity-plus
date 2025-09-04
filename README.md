@@ -50,24 +50,33 @@ A browser extension that reveals private equity ownership information for YouTub
 
 ## Build Commands
 
+### Production Builds (No Debug Logs)
+
 ```bash
-# Build both Chrome and Firefox versions
+# Build both versions for production (removes console logs)
 node build.js
 
-# Build only Chrome version
+# Build specific browser for production
 node build.js chrome
-
-# Build only Firefox version
 node build.js firefox
+```
 
+### Development Builds (With Debug Logs)
+
+```bash
+# Build both versions with debug logs
+node build.js --debug
+
+# Build specific browser with debug logs
+node build.js chrome --debug
+node build.js firefox --debug
+```
+
+### Other Commands
+
+```bash
 # Clean build directory
 node build.js clean
-
-# Using npm scripts
-npm run build          # Build both versions
-npm run build:chrome   # Chrome only
-npm run build:firefox  # Firefox only
-npm run clean          # Clean builds
 ```
 
 ## Browser Support
@@ -98,7 +107,13 @@ npm run clean          # Clean builds
 
 The extension uses a unified `content.js` file that works across both Chrome and Firefox by detecting the available browser APIs automatically.
 
-Debug logging can be viewed in the browser console with the prefix "YT Equity Plus:".
+### Debug Mode
+
+When building with `--debug` flag or using `npm run build:debug`, console logs are preserved for debugging. These logs can be viewed in the browser console with the prefix "YT Equity Plus:".
+
+### Production Mode
+
+Production builds automatically remove all console.log, console.error, and console.warn statements to keep the extension clean and performant.
 
 ## Credits
 
@@ -106,5 +121,5 @@ Fork of [kamo-chip/yt-equity](https://github.com/Kamo-Chip/yt-equity) with impro
 
 - uBlock Origin compatibility
 - Firefox support
-- Enhanced build system
-- Better debugging
+- Cross-browser build system
+- Debug/production builds

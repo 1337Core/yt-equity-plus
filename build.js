@@ -6,6 +6,46 @@ const path = require('path');
 const CHROME_DIR = 'build/chrome';
 const FIREFOX_DIR = 'build/firefox';
 
+function removeConsoleLogsFromFile(filePath) {
+  let content = fs.readFileSync(filePath, 'utf8');
+
+  // Split into lines for easier processing
+  const lines = content.split('\n');
+  const cleanedLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Skip lines that contain console statements
+    if (/^\s*console\.(log|error|warn|info|debug)\s*\(/.test(line)) {
+      // Skip this line and any continuation lines until we find the closing
+      let j = i;
+      let foundClosing = false;
+
+      while (j < lines.length && !foundClosing) {
+        const currentLine = lines[j];
+        // Look for semicolon or standalone closing parenthesis
+        if (/[);]\s*$/.test(currentLine) || /^\s*\)/.test(currentLine)) {
+          foundClosing = true;
+        }
+        j++;
+      }
+
+      i = j - 1; // Set i to the last line we processed
+      continue;
+    }
+
+    cleanedLines.push(line);
+  }
+
+  // Join lines and clean up excessive empty lines
+  const cleanedContent = cleanedLines.join('\n')
+    .replace(/\n\n\n+/g, '\n\n'); // Replace multiple empty lines with max 2
+
+  fs.writeFileSync(filePath, cleanedContent);
+  console.log(`Removed console logs from: ${filePath}`);
+}
+
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -87,23 +127,39 @@ function clean() {
 
 function main() {
   const args = process.argv.slice(2);
+  const isDebug = args.includes('--debug');
+  const isProduction = args.includes('--production') || (!args.includes('--debug') && !args.includes('chrome') && !args.includes('firefox'));
 
   if (args.includes('clean')) {
     clean();
     return;
   }
 
-  if (args.includes('chrome') || args.length === 0) {
+  const buildChromeBrowser = args.includes('chrome') || (args.length === 1 && (args.includes('--debug') || args.includes('--production'))) || args.length === 0;
+  const buildFirefoxBrowser = args.includes('firefox') || (args.length === 1 && (args.includes('--debug') || args.includes('--production'))) || args.length === 0;
+
+  if (buildChromeBrowser) {
     buildChrome();
+    if (!isDebug) {
+      removeConsoleLogsFromFile(path.join(CHROME_DIR, 'content.js'));
+    }
   }
 
-  if (args.includes('firefox') || args.length === 0) {
+  if (buildFirefoxBrowser) {
     buildFirefox();
+    if (!isDebug) {
+      removeConsoleLogsFromFile(path.join(FIREFOX_DIR, 'content.js'));
+    }
   }
 
-  console.log('\nBuild complete!');
+  const modeText = isDebug ? ' (debug mode)' : ' (production mode - console logs removed)';
+  console.log('\nBuild complete!' + modeText);
   console.log(`Chrome extension: ${CHROME_DIR}/`);
   console.log(`Firefox extension: ${FIREFOX_DIR}/`);
+
+  if (!isDebug) {
+    console.log('\nTo build with debug logs: node build.js --debug');
+  }
 }
 
 main();
