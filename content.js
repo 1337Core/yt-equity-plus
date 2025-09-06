@@ -6,6 +6,10 @@ let lastUrl = location.href;
 
 function safeGetURL(path) {
   try {
+    // Firefox uses browser API, Chrome uses chrome API
+    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.getURL) {
+      return browser.runtime.getURL(path);
+    }
     if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
       return chrome.runtime.getURL(path);
     }
@@ -25,13 +29,16 @@ if (dataUrl) {
     .then((json) => {
       channelData = json.channels;
       channelDataError = "";
+      console.log("YT Equity Plus: Loaded", channelData.length, "channels");
       runInjection();
     })
     .catch((e) => {
       channelDataError = "Unable to load data";
+      console.error("YT Equity Plus: Failed to load data", e);
     });
 } else {
   channelDataError = "Extension unavailable";
+  console.error("YT Equity Plus: Could not get data URL");
 }
 
 function getChannelIdentifier() {
@@ -44,7 +51,7 @@ function getChannelIdentifier() {
     if (linkEl && linkEl.href.includes("/@")) {
       id = "@" + linkEl.href.split("/@")[1].split("/")[0];
     } else {
-      console.log("Couldn't find channel handle in video owner link");
+      console.log("YT Equity Plus: Couldn't find channel handle in video owner link");
     }
   } else if (location.href.includes("/channel/")) {
     id = location.href.split("/channel/")[1].split(/[/?#]/)[0];
@@ -52,6 +59,7 @@ function getChannelIdentifier() {
     id = "@" + location.href.split("/@")[1].split(/[/?#]/)[0];
   }
 
+  console.log("YT Equity Plus: Channel identifier:", id);
   return id;
 }
 
@@ -77,6 +85,7 @@ function findBadgeContainer() {
       document.querySelector("h1.dynamic-text-view-model-wiz__h1");
   }
 
+  console.log("YT Equity Plus: Badge container:", container);
   return container;
 }
 
@@ -216,23 +225,43 @@ function injectButton(container, { found, error }) {
 }
 
 function computeFound(id) {
-  if (!channelData) return null;
+  if (!channelData) {
+    console.log("YT Equity Plus: No channel data loaded");
+    return null;
+  }
+
+  console.log("YT Equity Plus: Looking for channel:", id);
+
+  let found = null;
   if (id.includes("@")) {
-    return channelData.find(
+    found = channelData.find(
       (ch) => ch.channelHandle.toLowerCase() === id.toLowerCase()
     );
+  } else {
+    found = channelData.find(
+      (ch) => ch.channelId.toLowerCase() === id.toLowerCase()
+    );
   }
-  return channelData.find(
-    (ch) => ch.channelId.toLowerCase() === id.toLowerCase()
-  );
+
+  console.log("YT Equity Plus: Found result:", found);
+  return found;
 }
 
 function runInjection() {
   const id = getChannelIdentifier();
-  if (!id) return;
+  if (!id) {
+    console.log("YT Equity Plus: No channel identifier found");
+    return;
+  }
+
   const found = computeFound(id);
   const container = findBadgeContainer();
-  if (!container) return;
+  if (!container) {
+    console.log("YT Equity Plus: No badge container found");
+    return;
+  }
+
+  console.log("YT Equity Plus: Injecting button with result:", found ? "FOUND" : "NOT FOUND");
   injectButton(container, { found, error: channelDataError });
 }
 
@@ -258,11 +287,13 @@ function startUrlWatcher() {
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
+      console.log("YT Equity Plus: URL changed to:", location.href);
       runInjection();
     }
   }, 500);
 }
 
+console.log("YT Equity Plus: Content script loaded");
 startObserver();
 startUrlWatcher();
 runInjection();
