@@ -7,41 +7,13 @@ const CHROME_DIR = 'build/chrome';
 const FIREFOX_DIR = 'build/firefox';
 
 function removeConsoleLogsFromFile(filePath) {
-  let content = fs.readFileSync(filePath, 'utf8');
-
-  // Split into lines for easier processing
-  const lines = content.split('\n');
-  const cleanedLines = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // Skip lines that contain console statements
-    if (/^\s*console\.(log|error|warn|info|debug)\s*\(/.test(line)) {
-      // Skip this line and any continuation lines until we find the closing
-      let j = i;
-      let foundClosing = false;
-
-      while (j < lines.length && !foundClosing) {
-        const currentLine = lines[j];
-        // Look for semicolon or standalone closing parenthesis
-        if (/[);]\s*$/.test(currentLine) || /^\s*\)/.test(currentLine)) {
-          foundClosing = true;
-        }
-        j++;
-      }
-
-      i = j - 1; // Set i to the last line we processed
-      continue;
-    }
-
-    cleanedLines.push(line);
-  }
-
-  // Join lines and clean up excessive empty lines
-  const cleanedContent = cleanedLines.join('\n')
-    .replace(/\n\n\n+/g, '\n\n'); // Replace multiple empty lines with max 2
-
+  const content = fs.readFileSync(filePath, 'utf8');
+  const cleanedContent = content
+    .split('\n')
+    // Remove only standalone console calls on a single line.
+    .filter(line => !/^\s*console\.(log|error|warn|info|debug)\s*\(.*\)\s*;?\s*$/.test(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n');
   fs.writeFileSync(filePath, cleanedContent);
   console.log(`Removed console logs from: ${filePath}`);
 }
