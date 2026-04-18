@@ -364,17 +364,6 @@
       "firmWebsite": "https://www.spotter.com/"
     },
     {
-      "channelId": "UC-g_O9HWb5B0rVDG1hLd5Hw",
-      "channelName": "EYstreem",
-      "channelHandle": "@eystreem",
-      "profilePictureURL": "https://yt3.ggpht.com/-Zod6R9yoOxk09tI1S2bVzrIWscfOJmxpYvU0p3mm8RwGBVmXabfpBR35QKExgQQ5PaCDjp39g=s192-c-k-c0x00ffffff-no-rj",
-      "level": "confirmed",
-      "type": "funding",
-      "source": "https://www.spotter.com/about",
-      "firmName": "Spotter",
-      "firmWebsite": "https://www.spotter.com/"
-    },
-    {
       "channelId": "UCbp9MyKCTEww4CxEzc_Tp0Q",
       "channelName": "Stokes Twins",
       "channelHandle": "@stokestwins",
@@ -408,15 +397,26 @@
       "firmWebsite": "https://www.spotter.com/"
     },
     {
-      "channelId": "UCtlth0w7_mYqpHPViMhQ99Q",
-      "channelName": "Oddbods - Official Channel",
-      "channelHandle": "@oddbods",
-      "profilePictureURL": "https://yt3.ggpht.com/cZV2n1Z7fIEDToh5K0dC7SpQt8y_--n1syvg2_YCperPaV9K9UyTbDPdmMaG-wSkhlXM08f1Yw=s192-c-k-c0x00ffffff-no-rj",
+      "channelId": "UCy2RomOcw6oMP0YU2GwNnVA",
+      "channelName": "Tiffany La'Ryn",
+      "channelHandle": "@tiffanylaryn",
+      "profilePictureURL": "https://yt3.ggpht.com/cxxmp6Xzl8zHDDNRWRDweFlRQhJ2jg4039V0WJf9tMeUPPn81U1NgxMgRJodHsC6DqUewUv7=s192-c-k-c0x00ffffff-no-rj",
       "level": "confirmed",
-      "type": "acquisition",
-      "source": "https://www.moonbug.com/news/moonbug-entertainment-acquires-leading-singapore-production-studio-one-animation",
-      "firmName": "Moonbug Entertainment",
-      "firmWebsite": "https://www.moonbug.com"
+      "type": "funding",
+      "source": "https://www.spotter.com/about",
+      "firmName": "Spotter",
+      "firmWebsite": "https://www.spotter.com/"
+    },
+    {
+      "channelId": "UCVAbWl3d3XuHY28wU9DoDpA",
+      "channelName": "pierson",
+      "channelHandle": "@pierson",
+      "profilePictureURL": "https://yt3.ggpht.com/ytc/AIdro_m5jZXt6SUoifMivcJSL7mJ_uKZiXWZ9JiymX1z_mH-Kupe=s192-c-k-c0x00ffffff-no-rj",
+      "level": "confirmed",
+      "type": "funding",
+      "source": "https://www.spotter.com/about",
+      "firmName": "Spotter",
+      "firmWebsite": "https://www.spotter.com/"
     },
     {
       "channelId": "UC0v-tlzsn0QZwJnkiaUSJVQ",
@@ -604,6 +604,39 @@
       "source": "https://www.littledotstudios.com/en-us/",
       "firmName": "Little Dot Studios",
       "firmWebsite": "https://www.littledotstudios.com/en-us/"
+    },
+    {
+      "channelId": "UCtqAF8FSQIIq-vBLKtgLH_w",
+      "channelName": "Parable - Free History Documentaries",
+      "channelHandle": "@parablechannel",
+      "profilePictureURL": "https://yt3.ggpht.com/Hhlbb1nBziEto-9NM4U9aFkQkNTHdJas6fQE5sH9uFcHHe5WYXj6rv6bFaF4bIykZVTjbcrt=s192-c-k-c0x00ffffff-no-rj",
+      "level": "confirmed",
+      "type": "acquisition",
+      "source": "https://blog.littledotstudios.com/en-us/news-views/parable",
+      "firmName": "Little Dot Studios",
+      "firmWebsite": "https://www.littledotstudios.com/"
+    },
+    {
+      "channelId": "UCOk2CgtW_euf-9w34fnYQnA",
+      "channelName": "Chronicle - Medieval History Documentaries",
+      "channelHandle": "@chroniclemedieval",
+      "profilePictureURL": "https://yt3.ggpht.com/KrpDHw2paedWX-p2kD9O0ZeZewNvAHYw2gCcD6oXe7DDXjdfevuDnm0jAItlBwP1ZLrTENiy=s192-c-k-c0x00ffffff-no-rj",
+      "level": "confirmed",
+      "type": "acquisition",
+      "source": "https://www.littledotstudios.com/en-us/channels",
+      "firmName": "Little Dot Studios",
+      "firmWebsite": "https://www.littledotstudios.com/"
+    },
+    {
+      "channelId": "UCV-yCAXMS-nWrHtORuDfSuQ",
+      "channelName": "Odyssey - Ancient History Documentaries",
+      "channelHandle": "@odyssey",
+      "profilePictureURL": "https://yt3.ggpht.com/ytc/AIdro_nH1mxojlKQkirbEa2ZxgOGEQ7UX_T0RYJe3UPGhTDQDg=s192-c-k-c0x00ffffff-no-rj",
+      "level": "confirmed",
+      "type": "acquisition",
+      "source": "https://www.littledotstudios.com/en-us/channels",
+      "firmName": "Little Dot Studios",
+      "firmWebsite": "https://www.littledotstudios.com/"
     },
     {
       "channelId": "UCL6JmiMXKoXS6bpP1D3bk8g",
