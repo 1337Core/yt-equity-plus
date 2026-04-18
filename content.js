@@ -3,11 +3,40 @@ let channelData = null;
 let channelDataError = "";
 let observer = null;
 let lastUrl = location.href;
+let injectionRetryTimeout = null;
+const dismissedBadgeStorageKey = "pe-dismissed-badge-keys";
+
+const runtimeApi =
+  (typeof browser !== "undefined" && browser.runtime) ||
+  (typeof chrome !== "undefined" && chrome.runtime) ||
+  null;
+
+function loadDismissedBadgeKeys() {
+  try {
+    const raw = window.sessionStorage.getItem(dismissedBadgeStorageKey);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) {
+      return new Set(parsed.filter((key) => typeof key === "string"));
+    }
+  } catch (_) {}
+  return new Set();
+}
+
+const dismissedBadgeKeys = loadDismissedBadgeKeys();
+
+function persistDismissedBadgeKeys() {
+  try {
+    window.sessionStorage.setItem(
+      dismissedBadgeStorageKey,
+      JSON.stringify([...dismissedBadgeKeys]),
+    );
+  } catch (_) {}
+}
 
 function safeGetURL(path) {
   try {
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
-      return chrome.runtime.getURL(path);
+    if (runtimeApi && typeof runtimeApi.getURL === "function") {
+      return runtimeApi.getURL(path);
     }
   } catch (_) {}
   return null;
@@ -25,7 +54,7 @@ if (dataUrl) {
     .then((json) => {
       channelData = json.channels;
       channelDataError = "";
-      runInjection();
+      scheduleInjection(500);
     })
     .catch((e) => {
       channelDataError = "Unable to load data";
@@ -39,7 +68,7 @@ function getChannelIdentifier() {
 
   if (location.href.includes("/watch?v=")) {
     const linkEl = document.querySelector(
-      "a.yt-simple-endpoint.style-scope.ytd-video-owner-renderer"
+      "a.yt-simple-endpoint.style-scope.ytd-video-owner-renderer",
     );
     if (linkEl && linkEl.href.includes("/@")) {
       id = "@" + linkEl.href.split("/@")[1].split("/")[0];
@@ -68,9 +97,13 @@ function findBadgeContainer() {
       document.querySelector("ytd-c4-tabbed-header-renderer #buttons") ||
       document.querySelector("#inner-header-container #buttons") ||
       document.querySelector("#channel-header #buttons") ||
-      document.querySelector("ytd-c4-tabbed-header-renderer #inner-header-container") ||
+      document.querySelector(
+        "ytd-c4-tabbed-header-renderer #inner-header-container",
+      ) ||
       document.querySelector("#inner-header-container") ||
-      document.querySelector("yt-page-header-renderer #inner-header-container") ||
+      document.querySelector(
+        "yt-page-header-renderer #inner-header-container",
+      ) ||
       document.querySelector("#channel-header") ||
       document.querySelector("ytd-c4-tabbed-header-renderer") ||
       document.querySelector("yt-flexible-actions-view-model") ||
@@ -82,28 +115,44 @@ function findBadgeContainer() {
 
 function handleOutsideClick(ev) {
   if (activePopup && !activePopup.contains(ev.target)) {
-    activePopup.remove();
-    document.removeEventListener("click", handleOutsideClick);
-    const btn = document.querySelector("#pe-check-button");
-    if (btn) btn.classList.remove("button-active");
-
-    const ping = document.querySelector("#pe-ping");
-    if (ping) ping.remove();
-
-    activePopup = null;
+    closeActivePopup();
   }
 }
 
 window.addEventListener("yt-page-data-updated", (e) => {
-  if (activePopup) {
-    activePopup.remove();
-    document.removeEventListener("click", handleOutsideClick);
-    activePopup = null;
-  }
-  runInjection();
+  closeActivePopup();
+  scheduleInjection(500);
 });
 
-function injectButton(container, { found, error }) {
+function closeActivePopup() {
+  if (!activePopup) return;
+  activePopup.remove();
+  activePopup = null;
+  document.removeEventListener("click", handleOutsideClick);
+
+  const btn = document.querySelector("#pe-check-button");
+  if (btn) btn.classList.remove("button-active");
+}
+
+function removeInjectedUI() {
+  closeActivePopup();
+  const wrapper = document.querySelector("#pe-check-button-wrapper");
+  if (wrapper) wrapper.remove();
+}
+
+function getBadgeKey(id, found) {
+  return (found?.channelId || found?.channelHandle || id || "").toLowerCase();
+}
+
+function dismissBadge(badgeKey, wrapper) {
+  if (!badgeKey) return;
+  dismissedBadgeKeys.add(badgeKey);
+  persistDismissedBadgeKeys();
+  const ping = wrapper.querySelector("#pe-ping");
+  if (ping) ping.remove();
+}
+
+function injectButton(container, { found, error, badgeKey }) {
   const existing = document.querySelector("#pe-check-button-wrapper");
   if (existing && container.contains(existing)) return;
   if (existing) existing.remove();
@@ -120,20 +169,31 @@ function injectButton(container, { found, error }) {
   else button.title = "Check PE ownership";
   wrapper.appendChild(button);
 
-  let ping = null;
-  if (found) {
-    ping = document.createElement("span");
+  const shouldShowPing = found && badgeKey && !dismissedBadgeKeys.has(badgeKey);
+  if (shouldShowPing) {
+    const ping = document.createElement("span");
     ping.id = "pe-ping";
     wrapper.appendChild(ping);
   }
 
   container.appendChild(wrapper);
 
-  button.addEventListener("click", () => {
-    if (activePopup) {
-      activePopup.remove();
-      document.removeEventListener("click", handleOutsideClick);
-      activePopup = null;
+  button.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (found) dismissBadge(badgeKey, wrapper);
+
+    const isTogglingCurrentPopup =
+      activePopup && button.classList.contains("button-active");
+
+    if (isTogglingCurrentPopup) {
+      closeActivePopup();
+      return;
+    }
+
+    closeActivePopup();
+
+    if (!document.body) {
+      return;
     }
 
     const popup = document.createElement("div");
@@ -198,11 +258,7 @@ function injectButton(container, { found, error }) {
 
     closeBtn.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      popup.remove();
-      activePopup = null;
-      button.classList.remove("button-active");
-      if (ping) ping.remove();
-      document.removeEventListener("click", handleOutsideClick);
+      closeActivePopup();
     });
 
     popup.appendChild(closeBtn);
@@ -219,21 +275,44 @@ function computeFound(id) {
   if (!channelData) return null;
   if (id.includes("@")) {
     return channelData.find(
-      (ch) => ch.channelHandle.toLowerCase() === id.toLowerCase()
+      (ch) => ch.channelHandle.toLowerCase() === id.toLowerCase(),
     );
   }
   return channelData.find(
-    (ch) => ch.channelId.toLowerCase() === id.toLowerCase()
+    (ch) => ch.channelId.toLowerCase() === id.toLowerCase(),
   );
+}
+
+function scheduleInjection(delay = 0) {
+  clearTimeout(injectionRetryTimeout);
+  injectionRetryTimeout = window.setTimeout(() => {
+    injectionRetryTimeout = null;
+    runInjection();
+  }, delay);
 }
 
 function runInjection() {
   const id = getChannelIdentifier();
-  if (!id) return;
+  if (!id) {
+    removeInjectedUI();
+    return;
+  }
+
   const found = computeFound(id);
+  const badgeKey = getBadgeKey(id, found);
+
+  if (channelData && !found && !channelDataError) {
+    removeInjectedUI();
+    return;
+  }
+
   const container = findBadgeContainer();
-  if (!container) return;
-  injectButton(container, { found, error: channelDataError });
+  if (!container) {
+    scheduleInjection(500);
+    return;
+  }
+
+  injectButton(container, { found, error: channelDataError, badgeKey });
 }
 
 function debounce(fn, wait) {
@@ -258,11 +337,11 @@ function startUrlWatcher() {
   setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      runInjection();
+      scheduleInjection(500);
     }
   }, 500);
 }
 
 startObserver();
 startUrlWatcher();
-runInjection();
+scheduleInjection(500);
