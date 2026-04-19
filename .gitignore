@@ -1,1 +1,7 @@
 .DS_Store
+.agent-browser-profile/
+.chrome-test-profile/
+.pw-profile
+.pw-profile-manual/
+.pw-profile-spa/
+.pw-profile-watch-only
