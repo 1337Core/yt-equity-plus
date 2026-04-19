@@ -215,9 +215,8 @@ function injectButton(container, { found, error, badgeKey }) {
       const li1 = document.createElement("li");
       li1.innerHTML = `
         ${iconMarkup("icons/money.svg")}
-        <strong>Investment Status:</strong>
-        ${found.level.charAt(0).toUpperCase() + found.level.slice(1)}
-        ${found.type === "funding" ? "Funding" : "Acquisition"}
+        <strong>Status:</strong>
+        ${found.type === "funding" ? "Funded" : "Acquired"}
       `;
       list.appendChild(li1);
 
@@ -246,7 +245,7 @@ function injectButton(container, { found, error, badgeKey }) {
       const li = document.createElement("li");
       li.innerHTML = `
         ${iconMarkup("icons/money.svg")}
-        <strong>Investment Status:</strong> Independent
+        <strong>Status:</strong> Independent
       `;
       list.appendChild(li);
     }
